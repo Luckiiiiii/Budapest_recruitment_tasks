@@ -1,0 +1,32 @@
+@Luckiiiiii ➜ /workspaces/Budapest_recruitment_tasks (main) $ ls
+DynamicProgrammingTask1.py  Input_data_task_1  Input_data_task_2  README.md  __pycache__  test__dynamic_programming_task_1.py  tests
+@Luckiiiiii ➜ /workspaces/Budapest_recruitment_tasks (main) $ python DynamicProgrammingTask1.py 
+/workspaces/Budapest_recruitment_tasks/Input_data_task_1/Dynamic Programming Homework.xlsx
+2024-12-01 17:47:37,265 - INFO - All required columns are present.
+2024-12-01 17:47:37,265 - DEBUG - Group capacity: 1000
+2024-12-01 17:47:37,266 - DEBUG - Demands-capacity: [300, 100, 50, 490, 60]
+2024-12-01 17:47:37,266 - DEBUG - Limits: [200.0, 110.0, inf, 500.0, inf]
+2024-12-01 17:47:37,266 - DEBUG - Total demand: 1000
+2024-12-01 17:47:37,266 - DEBUG - Initial allocation based on proportional demand: [200.0, np.float64(100.0), np.float64(50.0), np.float64(490.0), np.float64(60.0)]
+2024-12-01 17:47:37,266 - DEBUG - Initial allocated capacity (Sum): 900.0
+2024-12-01 17:47:37,266 - INFO - Surplus capacity to be allocated (group_capacity - capacity_sum): 100.0
+2024-12-01 17:47:37,266 - DEBUG - Products that can still receive allocation: [1, 2, 3, 4]
+2024-12-01 17:47:37,266 - DEBUG - Remaining demand for allocation: 700
+2024-12-01 17:47:37,266 - DEBUG - Product 1: Adding 14.29 to allocation, new allocation: 110.00
+2024-12-01 17:47:37,266 - DEBUG - Product 2: Adding 7.14 to allocation, new allocation: 57.14
+2024-12-01 17:47:37,266 - DEBUG - Product 3: Adding 70.00 to allocation, new allocation: 500.00
+2024-12-01 17:47:37,266 - DEBUG - Product 4: Adding 8.57 to allocation, new allocation: 68.57
+2024-12-01 17:47:37,266 - DEBUG - Updated allocated capacity after adjustment: 935.7142857142857
+2024-12-01 17:47:37,266 - INFO - Surplus capacity to be allocated (group_capacity - capacity_sum): 64.28571428571433
+2024-12-01 17:47:37,267 - DEBUG - Products that can still receive allocation: [2, 4]
+2024-12-01 17:47:37,267 - DEBUG - Remaining demand for allocation: 110
+2024-12-01 17:47:37,267 - DEBUG - Product 2: Adding 29.22 to allocation, new allocation: 86.36
+2024-12-01 17:47:37,267 - DEBUG - Product 4: Adding 35.06 to allocation, new allocation: 103.64
+2024-12-01 17:47:37,267 - DEBUG - Updated allocated capacity after adjustment: 1000.0
+2024-12-01 17:47:37,268 - DEBUG - Allocation share added to the DataFrame: [0.2, 0.11, 0.08636363636363638, 0.5, 0.10363636363636365]
+  PRODUCT  SHARE  GROUP CAPACITY  CAPACITY  INDIVIDUAL LIMIT OVERLIMIT ALLOCATION NEW ALLOC. SHARE  NEW OVERLIMIT
+0       A  30.0%            1000       300             200.0      True      200.0            20.0%          False
+1       B  10.0%            1000       100             110.0     False      110.0            11.0%          False
+2       C   5.0%            1000        50               NaN     False       86.4             8.6%          False
+3       D  49.0%            1000       490             500.0     False      500.0            50.0%          False
+4       E   6.0%            1000        60               NaN     False      103.6            10.4%          False
