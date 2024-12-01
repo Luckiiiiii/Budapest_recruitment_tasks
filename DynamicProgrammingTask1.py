@@ -64,83 +64,121 @@ class ProportionalAllocation(AllocationStrategy):
     Implements proportional allocation based on demand.
     """
 
+
+import pandas as pd
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+class AllocationStrategy:
+    """
+    Abstract base class for allocation strategies.
+    """
+
     def allocate(self, data):
+        raise NotImplementedError("Subclasses should implement the allocate method.")
+
+
+class ProportionalAllocation(AllocationStrategy):
+    """
+    Implements proportional allocation based on demand.
+    """
+
+    def allocate(self, data):
+        self._validate_columns(data)
+        if data.empty:
+            return self._handle_empty_data(data)
+
+        group_capacity, demands, limits = self._extract_columns(data)
+        allocation = self._initial_allocation(demands, limits, group_capacity)
+        allocation = self._adjust_allocation(allocation, demands, limits, group_capacity)
+
+        data['ALLOCATION'] = allocation
+        data = self._calculate_allocation_share(data)
+        data['NEW OVERLIMIT'] = data['ALLOCATION'] < data['INDIVIDUAL LIMIT']
+
+        return data
+
+    def _validate_columns(self, data):
         required_columns = {'GROUP CAPACITY', 'CAPACITY', 'INDIVIDUAL LIMIT'}
         if not required_columns.issubset(data.columns):
             missing_columns = required_columns - set(data.columns)
             logging.error(
                 f"Missing required columns. Expected columns: {required_columns}, but got: {set(data.columns)}")
             raise KeyError(
-                f"Missing required columns. Expected columns: {required_columns}, "
-                f"but got: {set(data.columns)}"
-            )
-
+                f"Missing required columns. Expected columns: {required_columns}, but got: {set(data.columns)}")
         logging.info("All required columns are present.")
 
-        if data.empty:
-            logging.warning("The input DataFrame is empty. Returning an empty DataFrame with an 'ALLOCATION' column.")
-            return pd.DataFrame(columns=data.columns.tolist() + ['ALLOCATION'])
+    def _handle_empty_data(self, data):
+        logging.warning("The input DataFrame is empty. Returning an empty DataFrame with an 'ALLOCATION' column.")
+        return pd.DataFrame(columns=data.columns.tolist() + ['ALLOCATION'])
 
-        logging.info("Input DataFrame is not empty. Proceeding with allocation process.")
-
-        # Extract necessary columns
+    def _extract_columns(self, data):
         group_capacity = data['GROUP CAPACITY'].iloc[0]
         demands = data['CAPACITY']
         limits = data['INDIVIDUAL LIMIT'].fillna(float('inf'))
-
         logging.debug(f"Group capacity: {group_capacity}")
-        logging.debug(f"Demands: {demands.tolist()}")
+        logging.debug(f"Demands-capacity: {demands.tolist()}")
         logging.debug(f"Limits: {limits.tolist()}")
+        return group_capacity, demands, limits
 
-        # Step 1: Initialize allocation based on proportional demand
+    def _initial_allocation(self, demands, limits, group_capacity):
         total_demand = demands.sum()
         logging.debug(f"Total demand: {total_demand}")
-
-        allocation = [
-            min((demand / total_demand) * group_capacity, limit)
-            for demand, limit in zip(demands, limits)
-        ]
-
+        allocation = [min((demand / total_demand) * group_capacity, limit) for demand, limit in zip(demands, limits)]
         logging.debug(f"Initial allocation based on proportional demand: {allocation}")
+        return allocation
 
-        # Step 2: Adjust allocation iteratively to account for surplus
+    def _adjust_allocation(self, allocation, demands, limits, group_capacity):
         allocated_capacity = sum(allocation)
-        logging.debug(f"Initial allocated capacity: {allocated_capacity}")
+        logging.debug(f"Initial allocated capacity (Sum): {allocated_capacity}")
 
         while allocated_capacity < group_capacity:
-            surplus = group_capacity - allocated_capacity
-            logging.info(f"Surplus capacity to be allocated: {surplus}")
-
-            remaining_products = [
-                i for i in range(len(allocation)) if allocation[i] < limits.iloc[i]
-            ]
+            surplus = self._calculate_surplus(group_capacity, allocated_capacity)
+            remaining_products = self._get_remaining_products(allocation, limits)
 
             if not remaining_products:
                 logging.info("All products have reached their limits. Ending allocation process.")
-                break  # All products have reached their limits
+                break
 
-            logging.debug(f"Products that can still receive allocation: {remaining_products}")
-
-            # Distribute surplus proportionally among products under their limits
-            remaining_demand = sum(demands.iloc[i] for i in remaining_products)
-            logging.debug(f"Remaining demand for allocation: {remaining_demand}")
-
-            for i in remaining_products:
-                additional_capacity = (demands.iloc[i] / remaining_demand) * surplus
-                new_allocation = min(allocation[i] + additional_capacity, limits.iloc[i])
-                logging.debug(
-                    f"Product {i}: Adding {additional_capacity:.2f} to allocation, new allocation: {new_allocation:.2f}")
-                allocation[i] = new_allocation
-
+            remaining_demand = self._calculate_remaining_demand(demands, remaining_products)
+            allocation = self._distribute_surplus(allocation, demands, limits, remaining_products, remaining_demand,
+                                                  surplus)
             allocated_capacity = sum(allocation)
             logging.debug(f"Updated allocated capacity after adjustment: {allocated_capacity}")
 
-        # Add the allocation as a new column to the DataFrame
-        data['ALLOCATION'] = allocation
-        logging.info("Allocation process completed successfully.")
-        logging.debug(f"Final allocation: {allocation}")
+        return allocation
 
-        # Step 3: Calculate the allocation share relative to the total CAPACITY
+    def _calculate_surplus(self, group_capacity, allocated_capacity):
+        surplus = group_capacity - allocated_capacity
+        logging.info(f"Surplus capacity to be allocated (group_capacity - capacity_sum): {surplus}")
+        return surplus
+
+    def _get_remaining_products(self, allocation, limits):
+        remaining_products = [i for i in range(len(allocation)) if allocation[i] < limits.iloc[i]]
+        logging.debug(f"Products that can still receive allocation: {remaining_products}")
+        return remaining_products
+
+    def _calculate_remaining_demand(self, demands, remaining_products):
+        remaining_demand = sum(demands.iloc[i] for i in remaining_products)
+        logging.debug(f"Remaining demand for allocation: {remaining_demand}")
+        return remaining_demand
+
+    def _distribute_surplus(self, allocation, demands, limits, remaining_products, remaining_demand, surplus):
+        for i in remaining_products:
+            additional_capacity = self._calculate_additional_capacity(demands.iloc[i], remaining_demand, surplus)
+            allocation[i] = min(allocation[i] + additional_capacity, limits.iloc[i])
+            logging.debug(
+                f"Product {i}: Adding {additional_capacity:.2f} to allocation, new allocation: {allocation[i]:.2f}")
+        return allocation
+
+    def _calculate_additional_capacity(self, demand, remaining_demand, surplus):
+        if remaining_demand == 0:
+            return 0
+        return (demand / remaining_demand) * surplus
+
+    def _calculate_allocation_share(self, data):
         total_capacity = data['CAPACITY'].sum()
         if total_capacity == 0:
             logging.warning("Total capacity is zero, so allocation share cannot be calculated.")
@@ -148,10 +186,6 @@ class ProportionalAllocation(AllocationStrategy):
         else:
             data['NEW ALLOC. SHARE'] = (data['ALLOCATION'] / total_capacity)
             logging.debug(f"Allocation share added to the DataFrame: {data['NEW ALLOC. SHARE'].tolist()}")
-
-        # Create 'New OVERLIMIT' column based on condition
-        data['NEW OVERLIMIT'] = data['ALLOCATION'] < data['INDIVIDUAL LIMIT']
-
         return data
 
 
