@@ -64,27 +64,6 @@ class ProportionalAllocation(AllocationStrategy):
     Implements proportional allocation based on demand.
     """
 
-
-import pandas as pd
-import logging
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
-class AllocationStrategy:
-    """
-    Abstract base class for allocation strategies.
-    """
-
-    def allocate(self, data):
-        raise NotImplementedError("Subclasses should implement the allocate method.")
-
-
-class ProportionalAllocation(AllocationStrategy):
-    """
-    Implements proportional allocation based on demand.
-    """
-
     def allocate(self, data):
         self._validate_columns(data)
         if data.empty:

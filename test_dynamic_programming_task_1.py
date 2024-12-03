@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 import pandas as pd
-from DynamicProgrammingTask1 import FileReader, ProportionalAllocation, CapacityAllocator, format_output_columns
+from dynamic_programming_task_1 import FileReader, ProportionalAllocation, CapacityAllocator, format_output_columns
 
 
 class TestDynamicProgrammingTask1(unittest.TestCase):
