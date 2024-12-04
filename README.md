@@ -1,5 +1,22 @@
 # Budapest_recruitment_tasks
 
+To run on GitHub Codespace:
+Task 1: 
+python dynamic_programming_task_1.py
+Task 2:
+python material_balance_task_2.py
+or: 
+python material_balance_task_2.py --filepath Input_data_task_2/custom_data_material_balance_Task.xlsx
+
+Unit tests:
+Task 1:
+python test_material_balance_task_2.py 
+Task 2:
+python test_dynamic_programming_task_1.py 
+
+
+
+
 Budapest recruitment tasks
 Hi Lukasz,
 
